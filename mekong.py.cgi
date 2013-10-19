@@ -139,6 +139,7 @@ def read_books():
 				book_details[isbn] = {}
 				book_details[isbn][field] = {}
 				book_details[isbn][field] = value
+			#print isbn, " - ", field, ": ", value, "</br>"
 		elif n:
 			field = n.group(1)
 			if field in attribute_names:
@@ -163,9 +164,81 @@ def read_books():
 				book_details[isbn] = {}
 				book_details[isbn][field] = {}
 				book_details[isbn][field] = value
+			#print isbn, " - ", field, ": ", value, "</br>"
 
 	f.close()
 
+
+# This took jsut as long as read_books, but now it's working,
+# and I defintely understand how it works indepths now after 
+# having to heavily modify it.
+def search_books_terms(search_terms):
+
+	unknown_fields = []
+	for search_term in search_terms:
+		m = re.match(r'([^:]+):', search_term)
+		if (m and m.group(1) not in attribute_names):
+			unknown_fields.append(m.group(1))
+
+	matches = []
+	for isbn in (sorted(book_details)):
+		n_matches = 0
+		if ("=default_search=" not in book_details[isbn]):
+			book_details[isbn]["=default_search="] = book_details[isbn]["title"]+"\n"+book_details[isbn]["authors"]
+
+		for search_term in search_terms:
+			next_isbn = 0
+			match = 0
+			search_type = "=default_search="
+			term = search_term
+			m = re.match(r'([^:]+):(.*)', search_term)
+			if m:
+				search_type = m.group(1)
+				term = m.group(2)
+			if (search_type not in book_details[isbn]):
+				next_isbn = 1
+				break
+			field = book_details[isbn][search_type]
+			field = re.sub(r'[!().:]', '', field)
+			regex = re.compile('\s+%s\s+' % term.lower())
+			m = regex.search(field.lower())
+			if (m):
+				match = 1
+			regex = re.compile('^%s\s+' % term.lower())
+			m = regex.search(field.lower())
+			if (m):
+				match = 1
+			if match:
+				n_matches += 1
+				next_isbn = 1
+				break
+
+		if (n_matches > 0):
+			matches.append(isbn)
+		if (next_isbn):
+			next_isbn = 0
+			continue
+
+	matches_sorted = {}
+	for match in matches:
+		max_sales_rank = 100000000
+		if ("salesrank" not in book_details[match]):
+			book_details[match]["salesrank"] = max_sales_rank
+		sales_rank = book_details[match]["salesrank"]
+		matches_sorted[match] = int(sales_rank)
+
+	matches = [(k, matches_sorted[k]) for k in sorted(matches_sorted, key=matches_sorted.get)]
+
+	return matches
+
+
+
+def search_books(search_string):
+	search_string = re.sub('\s*$', '', search_string)
+	search_string = re.sub('^\s*', '', search_string)
+	matches = []
+	matches = search_books_terms(search_string.split())
+	return matches
 
 
 
@@ -173,6 +246,9 @@ def main():
 	page_header()
 
 	read_books()
+	matches = []
+	matches = search_books("cool")
+	print matches
 
 	page_trailer()
 """	
