@@ -3,7 +3,7 @@
 
 import cgi
 import cgitb
-import re
+import re, os
 cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
 
 base_dir = "."
@@ -26,36 +26,89 @@ def page_header():
 	<head>
 		<title>mekong.com.au</title>
 
+		<!-- Favicon -->
+		<link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+		<link rel="icon" href="./favicon.ico" type="image/x-icon">
+
 		<!-- Bootstrap/swatch -->
 		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
+		<link href="./stylish-portfolio.css" rel="stylesheet">
 		<link href="./bootstrap.css" rel="stylesheet">
 	</head>
 
 	<body>
-		<div class="container">
+	"""
+
+def home_page():
+	print """
+		<!-- Full Page Image Header Area -->
+		<div id="top" class="header">
+			<div class="vert-text">
+				<h1 class="diff_shadow">Mekong</h1>
+				<h3 class="diff_shadow">The <em>Authors</em> Channel To <em>You</em></h3>
+				<form class="">
+					<style>
+						.input-group-lg-home {
+							max-width: 500px;
+							padding: 15px;
+							margin: 0 auto;
+						}
+					</style>
+					<div class="input-group input-group-lg-home">
+						<input type="text" class="form-control" placeholder="Search for books..." name="search_terms" autofocus>
+						<span class="input-group-btn">
+						<button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+						</span>
+					</div>
+
+					<h3 class="diff_shadow">Or...</h3>
+				</form>
+				<a class="btn btn-primary" href="#login">Log in</a>
+			</div>
+		</div>
+		<!-- /Full Page Image Header Area -->
 	"""
 
 def login_form():
 	print """
-			<form method="post" class="form-signin">
-        		<h2 class="form-signin-heading">Please sign in</h2>
-        		<input type="test" class="form-control" placeholder="Username" name="username" autofocus>
-        		<input type="password" class="form-control" placeholder="Password" name="password">
-        		<button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-      		</form>
+		<div id="login" class="row">
+			<div class="col-sm-6" style="padding:20px 0px 50px 0px;">
+				<form method="post" class="form-signin">
+	        		<h2 class="form-signin-heading">Please sign in</h2>
+	        		<input type="text" class="form-control" placeholder="Username" name="username">
+	        		<input type="password" class="form-control" placeholder="Password" name="password">
+	        		<button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+	      		</form>
+	      	</div>
+
+	      	<div class="col-sm-6"  style="padding:20px 20px 50px 0px;">
+	      			<form class="form-signin">
+		      			<h2 class="form-signin-heading">Don't have an account?</h2>
+		      			<a class="btn btn-lg btn-primary btn-block" type="button" href="?page=register">Register</a>
+	      			</form>
+	      	</div>
+      	</div>
+	"""
+
+def login_home():
+	print """
+		<div class="container">
+			<h1>Mekong</h1>
+			<h3>isn't she just beaut...</h3>
+			<img src="./mekong_bg.jpg"/>
+		</div>
+
+	"""
+
+def register_form():
+	print """
+		<h1>Pls register..... pls.</h1>
 	"""
 
 def search_form():
 	print """
-			<form class="">
-				<div class="input-group input-group-lg">
-					<input type="text" class="form-control" placeholder="Search for books..." name="search_terms">
-					<span class="input-group-btn">
-						<button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-search"></span></button>
-					</span>
-				</div>
-			</form>
+
 	"""
 def display_search_results(isbn):
 	print """
@@ -89,9 +142,26 @@ def auth_error(item):
 
 def page_trailer():
 	print """
-		</div> <!-- /container -->
-
+		<script src="http://codeorigin.jquery.com/jquery-2.0.3.min.js"></script>
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript">
+			$(function() {
+				$('a[href*=#]:not([href=#])').click(function() {
+					if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+						var target = $(this.hash);
+						target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+						if (target.length) {
+							$('html,body').animate({
+								scrollTop: target.offset().top
+							}, 1000);
+							return false;
+						}
+					}
+				});
+			});
+		</script>
+
 	</body>
 </html>
 	"""
@@ -260,39 +330,56 @@ def search_books(search_string):
 	return search_books_terms(search_string.split())
 
 def search_results(search_terms):
+	read_books()
 	matches = search_books(search_terms)
 	matches_list = [matches[k][0] for k in xrange(len(matches))]
 	for isbn in matches_list:
 		display_search_results(isbn)
 
+def load_page(page):
+
+	if (page == "register"):
+		register_form()
+	elif (page == "login_home"):
+		login_home()
+
 
 def main():
 	page_header()
 
-	read_books()
-	"""
-	matches = []
-	matches = search_books("cool")
-	print matches
-	"""
+	query_string = os.environ.get("QUERY_STRING", "NONE")
+	page = ""
+
 	form = cgi.FieldStorage()
 	username = form.getvalue("username")
 	password = form.getvalue("password")
 	search_terms = form.getvalue("search_terms")
 
-	if ("search_terms" in form):
-		search_results(search_terms)
-	elif ("username" in form and "password" in form):
-
-		if (auth_username(username)):
-			if (auth_password(password)):
-				search_form()
-			else:
-				auth_error(last_error)
-		else:
-			auth_error(last_error)
-	else:
+	if (query_string == "NONE"):
+		home_page()
 		login_form()
+	else:
+		m = re.match('^page=(.*)$',query_string)
+		if m:
+			page = m.group(1)
+		else:
+			if ("search_terms" in form):
+				search_results(search_terms)
+			elif ("username" in form and "password" in form):
+				if (auth_username(username)):
+					if (auth_password(password)):
+						load_page("login_home")
+					else:
+						auth_error(last_error)
+				else:
+					auth_error(last_error)
+			else:
+				home_page()
+				login_form()
+
+	if (page != ""):
+		load_page(page)
+
 
 	page_trailer()
 
