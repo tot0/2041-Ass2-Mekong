@@ -27,8 +27,9 @@ def page_header():
 		<title>mekong.com.au</title>
 
 		<!-- Bootstrap/swatch -->
+		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
 		<link href="./bootstrap.css" rel="stylesheet">
-		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 	</head>
 
 	<body>
@@ -39,7 +40,7 @@ def login_form():
 	print """
 			<form method="post" class="form-signin">
         		<h2 class="form-signin-heading">Please sign in</h2>
-        		<input type="test" class="form-control" placeholder="Email" name="username" autofocus>
+        		<input type="test" class="form-control" placeholder="Username" name="username" autofocus>
         		<input type="password" class="form-control" placeholder="Password" name="password">
         		<button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
       		</form>
@@ -47,13 +48,29 @@ def login_form():
 
 def search_form():
 	print """
-			<form method="post" id="custom-search-form" class="form-search form-horizontal pull-right">
-			    <div class="input-append span12">
-			        <input type="search" class="search-query" placeholder="Search" name="search_terms">
-			        <button type="submit" class="btn"><i class="icon-search"></i></button>
-			    </div>
+			<form class="">
+				<div class="input-group input-group-lg">
+					<input type="text" class="form-control" placeholder="Search for books..." name="search_terms">
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+					</span>
+				</div>
 			</form>
 	"""
+def display_search_results(isbn):
+	print """
+			<div class="media">
+				<a class="pull-left" href="#">
+			    	<img class="media-object" src=%s height=75 width=65>
+			  	</a>
+			  	<div class="media-body">
+			    	<h4 class="media-heading">%s</h4>
+			    		%s
+			  	</div>
+			</div>
+
+	"""% (book_details[isbn]["smallimageurl"], book_details[isbn]["title"], book_details[isbn]["productdescription"])
+
 
 def auth_error(item):
 	print """
@@ -73,6 +90,8 @@ def auth_error(item):
 def page_trailer():
 	print """
 		</div> <!-- /container -->
+
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 	</body>
 </html>
 	"""
@@ -169,8 +188,8 @@ def read_books():
 	f.close()
 
 
-# This took jsut as long as read_books, but now it's working,
-# and I defintely understand how it works indepths now after 
+# This took just as long as read_books, but now it's working,
+# and I defintely understand how it works indepth now after 
 # having to heavily modify it.
 def search_books_terms(search_terms):
 
@@ -219,6 +238,7 @@ def search_books_terms(search_terms):
 			next_isbn = 0
 			continue
 
+	# Makes a dict key'd by the isbn's with the sales rank as the value.
 	matches_sorted = {}
 	for match in matches:
 		max_sales_rank = 100000000
@@ -227,6 +247,7 @@ def search_books_terms(search_terms):
 		sales_rank = book_details[match]["salesrank"]
 		matches_sorted[match] = int(sales_rank)
 
+	# Returns a list of tuples in the form [key, value] sorted by the value of matches_sorted dict.
 	matches = [(k, matches_sorted[k]) for k in sorted(matches_sorted, key=matches_sorted.get)]
 
 	return matches
@@ -236,30 +257,31 @@ def search_books_terms(search_terms):
 def search_books(search_string):
 	search_string = re.sub('\s*$', '', search_string)
 	search_string = re.sub('^\s*', '', search_string)
-	matches = []
-	matches = search_books_terms(search_string.split())
-	return matches
+	return search_books_terms(search_string.split())
 
+def search_results(search_terms):
+	matches = search_books(search_terms)
+	matches_list = [matches[k][0] for k in xrange(len(matches))]
+	for isbn in matches_list:
+		display_search_results(isbn)
 
 
 def main():
 	page_header()
 
 	read_books()
+	"""
 	matches = []
 	matches = search_books("cool")
 	print matches
-
-	page_trailer()
-"""	
+	"""
 	form = cgi.FieldStorage()
 	username = form.getvalue("username")
 	password = form.getvalue("password")
 	search_terms = form.getvalue("search_terms")
 
 	if ("search_terms" in form):
-		print "<h1>Items:</h1>"
-		print search_terms
+		search_results(search_terms)
 	elif ("username" in form and "password" in form):
 
 		if (auth_username(username)):
@@ -273,7 +295,7 @@ def main():
 		login_form()
 
 	page_trailer()
-"""
+
 
 
 main()
