@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 #Lucas Pickup, z3424653, lpickup
 
 import cgi
