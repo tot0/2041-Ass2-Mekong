@@ -5,6 +5,8 @@ import cgi
 import cgitb
 import re, os
 import json
+from Book_class import Book
+#import Book_class
 cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
 
 book_file = "books.json"
@@ -14,8 +16,6 @@ user_dir = "users/"
 last_error = ""
 attribute_names = {}
 user_details = {}
-book_details = {}
-
 
 def page_header():
 	print "Content-type: text/html;charset=utf-8"
@@ -35,6 +35,7 @@ def page_header():
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
 		<link href="./stylish-portfolio.css" rel="stylesheet">
 		<link href="./bootstrap.css" rel="stylesheet">
+
 	</head>
 
 	<body>
@@ -113,21 +114,94 @@ def register_form():
 
 def search_form():
 	print """
+			<style>
+				body { padding-top: 70px; }
+			</style>
 
+			<form class="navbar-fixed-top">
+				<style>
+					.input-group-lg-home {
+						max-width: 500px;
+						padding: 15px;
+						margin: 0 auto;
+					}
+				</style>
+				<div class="input-group input-group-lg-home">
+					<input type="text" class="form-control" placeholder="Search for books..." name="search_terms" autofocus>
+					<span class="input-group-btn">
+					<button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+					</span>
+				</div>
+
+			</form>
 	"""
-def display_search_results(isbn):
+
+def start_table():
 	print """
-			<div class="media">
-				<a class="pull-left" href="#">
-			    	<img class="media-object" src=%s height=75 width=65>
-			  	</a>
-			  	<div class="media-body">
-			    	<h4 class="media-heading">%s</h4>
-			    		%s
-			  	</div>
+		<div class="row col-sm-12">
+			<div class="col-lg-2"></div>
+			<div class="col-lg-8">
+				<table class="table table-hover col-lg-8">
+	"""
+
+
+def display_search_result(isbn):
+	book = read_book(isbn)
+
+	print """
+					<tr>
+						<td>
+							<a href="#">
+						    	<img src=%s height=75 width=65>
+						  	</a>
+						 </td>
+						 <td>
+						    	<a href="?page=book&isbn=%s"><h4>%s</h4></a>
+						    	%s	
+						</td>
+					</tr>
+	""" % (book.smallimageurl, book.isbn, book.title, book.all_authors)
+
+def end_table():
+	print """
+				</table>
+			</div>
+			<div class="col-lg-2"></div>
+		</div>
+			<center><em>Displaying first 20 results...</em></center>
+	"""
+
+def book_page(isbn):
+	book = read_book(isbn)
+#style="max-width: %spx;"
+	print """
+			<div class="row col-sm-12">
+				<div class="col-sm-1"></div>
+				<div class="col-sm-4">
+					<img class="img-responsive pull-right" style="border: 3px solid #000; margin-top:22px;" src="%s"/>
+				</div>
+				<div class="col-sm-6">
+					<h2><strong>%s</strong></h2>
+					by	%s </br>
+					<hr style="border-top:1px solid #5a5a5a;">
+					<p>%s</p>
+					<hr style="border-top:1px solid #5a5a5a;">
+					Date Published: <b>%s</b> by <em>%s</em></br>
+
+					</br>
+
+					<div class="well" style="padding:5px 5px 5px 5px; ">
+						<div style="margin-top:4px; float:left;">
+							Price: <em><strong>%s</strong></em>
+						</div>
+						<a class="btn btn-default btn-sm pull-right" href="?page=cart&book_add=%s">Add to Cart</a>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+				<div class="col-sm-1"></div>
 			</div>
 
-	"""% (book_details[isbn]["smallimageurl"], book_details[isbn]["title"], book_details[isbn]["productdescription"])
+	""" % (book.largeimageurl, book.title, book.all_authors, book.productdescription, book.publication_date, book.publisher, book.price, book.isbn)
 
 
 def auth_error(item):
@@ -144,6 +218,18 @@ def auth_error(item):
       	</div>
 	""" % item
 	login_form()
+
+def four_oh_four():
+	print """
+			<div id="top" class="header" style="background: url(mekong_ohno.jpg) no-repeat center center fixed;">
+				<div class="vert-text" style="color: black; vertical-align:text-top; padding:100px 0px 0px 0px;">
+					<h1 class="" style="text-shadow: 1px 1px 0px rgba(255, 255, 255, 1);">Oops!</h1>
+					<h3 class="" style="text-shadow: 2px 2px 3px rgba(255, 255, 255, 1);">It appears while enjoying <strong>Mekong</strong> you've veered into a sand bank!</h3>
+
+					<a class="btn btn-primary" href="?">Drift Home</a>
+				</div>
+			</div>
+	"""
 
 def page_trailer():
 	print """
@@ -208,80 +294,84 @@ def authenticate(username, password):
 def read_books():
 
 	f = open(book_file,'r')
+	books_details = json.load(f)
 
-	book_details = json.load(f)
-	#attribute_names = book_details[""]
+	books = []
+	for book_details in (books_details.values()):
+		books.append(Book(book_details))
 
 	f.close()
 
+	return books
+
+def read_book(isbn):
+
+	f = open(book_file, 'r')
+	books_details = json.load(f) 
+
+	book_details = books_details[isbn]
+	book = Book(book_details)
+
+	f.close
+
+	return book
 
 # This took just as long as read_books, but now it's working,
 # and I defintely understand how it works indepth now after 
 # having to heavily modify it.
 def search_books_terms(search_terms):
-	global book_details
+	books = read_books()
+
+	matches = []
 
 #	unknown_fields = []
 #	for search_term in search_terms:
 #		m = re.match(r'([^:]+):', search_term)
-#		if (m and m.group(1) not in attribute_names):
+#		if (m and m.group(1) not in ):
 #			unknown_fields.append(m.group(1))
 
-
-	matches = []
-	for isbn in (sorted(book_details)):
-		print isbn
+	for i in xrange(len(books)):
 		n_matches = 0
-		if ("=default_search=" not in book_details[isbn]):
-			book_details[isbn]["=default_search="] = book_details[isbn]["title"]+"\n"+book_details[isbn]["authors"]
-			print book_details[isbn]["=default_search="]
 		for search_term in search_terms:
-			next_isbn = 0
+			next_book = 0
 			match = 0
-			search_type = "=default_search="
 			term = search_term
 			m = re.match(r'([^:]+):(.*)', search_term)
 			if m:
 				search_type = m.group(1)
 				term = m.group(2)
-			if (search_type not in book_details[isbn]):
-				next_isbn = 1
-				break
-			field = book_details[isbn][search_type]
+
+			field = books[i].default_search
 			field = re.sub(r'[!().:]', '', field)
-			regex = re.compile('\s+%s\s+' % term.lower())
-			m = regex.search(field.lower())
+			#regex = re.compile('\s+%s\s+' % term.lower())
+			m = re.search(term.lower(), field.lower())#regex.search(field.lower())
 			if (m):
 				match = 1
-			regex = re.compile('^%s\s+' % term.lower())
-			m = regex.search(field.lower())
-			if (m):
-				match = 1
+			#regex = re.compile('^%s\s+' % term.lower())
+			#m = regex.search(field.lower())
+			#if (m):
+			#	match = 1
 			if match:
 				n_matches += 1
-				next_isbn = 1
+				next_book = 1
 				break
 
 		if (n_matches > 0):
-			matches.append(isbn)
-		if (next_isbn):
-			next_isbn = 0
+			matches.append(i)
+		if (next_book):
+			next_book = 0
 			continue
 
 	# Makes a dict key'd by the isbn's with the sales rank as the value.
 	matches_sorted = {}
-	for match in matches:
-		max_sales_rank = 100000000
-		if ("salesrank" not in book_details[match]):
-			book_details[match]["salesrank"] = max_sales_rank
-		sales_rank = book_details[match]["salesrank"]
-		matches_sorted[match] = int(sales_rank)
+	for i in matches:
+		sales_rank = books[i].salesrank
+		matches_sorted[books[i].isbn] = int(sales_rank)
 
 	# Returns a list of tuples in the form [key, value] sorted by the value of matches_sorted dict.
-	matches = [(k, matches_sorted[k]) for k in sorted(matches_sorted, key=matches_sorted.get)]
+	matches = [(k) for k in sorted(matches_sorted, key=matches_sorted.get)]
 
 	return matches
-
 
 
 def search_books(search_string):
@@ -290,15 +380,26 @@ def search_books(search_string):
 	return search_books_terms(search_string.split())
 
 def search_results(search_terms):
-	read_books()
 	matches = search_books(search_terms)
 	matches_list = [matches[k][0] for k in xrange(len(matches))]
-	for isbn in matches_list:
-		display_search_results(isbn)
+	search_form()
+	start_table()
+	if (len(matches) < 20):
+		num_results = len(matches)
+	else:
+		num_results = 20
+	for i in xrange(num_results):
+		display_search_result(matches[i])
+	end_table()
 
-def load_page(page):
+def load_page(page, isbn):
 
-	if (page == "register"):
+	if (page == "book"):
+		if (isbn == None):
+			four_oh_four()
+		else:	
+			book_page(isbn)
+	elif (page == "register"):
 		register_form()
 	elif (page == "login_home"):
 		login_home()
@@ -307,38 +408,29 @@ def load_page(page):
 def main():
 	page_header()
 
-	query_string = os.environ.get("QUERY_STRING", "NONE")
-	page = ""
-
 	form = cgi.FieldStorage()
+	page = form.getvalue("page")
+	isbn = form.getvalue("isbn")
 	username = form.getvalue("username")
 	password = form.getvalue("password")
 	search_terms = form.getvalue("search_terms")
 
-	if (query_string == "NONE"):
-		home_page()
-		login_form()
+	if ("page" in form):
+		load_page(page, isbn)
 	else:
-		m = re.match('^page=(.*)$',query_string)
-		if m:
-			page = m.group(1)
-		else:
-			if ("search_terms" in form):
-				search_results(search_terms)
-			elif ("username" in form and "password" in form):
-				if (auth_username(username)):
-					if (auth_password(password)):
-						load_page("login_home")
-					else:
-						auth_error(last_error)
+		if ("search_terms" in form):
+			search_results(search_terms)
+		elif ("username" in form and "password" in form):
+			if (auth_username(username)):
+				if (auth_password(password)):
+					load_page("login_home")
 				else:
 					auth_error(last_error)
 			else:
-				home_page()
-				login_form()
-
-	if (page != ""):
-		load_page(page)
+				auth_error(last_error)
+		else:
+			home_page()
+			login_form()
 
 
 	page_trailer()
