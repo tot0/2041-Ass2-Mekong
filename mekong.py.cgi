@@ -1,16 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/python2.7
 #Lucas Pickup, z3424653, lpickup
 
 import cgi
 import cgitb
 import re, os
+import json
 cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
 
-base_dir = "."
-book_file = base_dir + "/books.json"
-orders_dir = base_dir + "/orders"
-baskets_dir = base_dir + "/baskets"
-user_dir = base_dir + "/users"
+book_file = "books.json"
+orders_dir = "orders/"
+baskets_dir = "baskets/"
+user_dir = "users/"
 last_error = ""
 attribute_names = {}
 user_details = {}
@@ -72,7 +72,7 @@ def home_page():
 
 def login_form():
 	print """
-		<div id="login" class="row">
+		<div id="login" class="row col-sm-12">
 			<div class="col-sm-6" style="padding:20px 0px 50px 0px;">
 				<form method="post" class="form-signin">
 	        		<h2 class="form-signin-heading">Please sign in</h2>
@@ -82,7 +82,7 @@ def login_form():
 	      		</form>
 	      	</div>
 
-	      	<div class="col-sm-6"  style="padding:20px 20px 50px 0px;">
+	      	<div class="col-sm-6"  style="padding:20px 0px 50px 0px;">
 	      			<form class="form-signin">
 		      			<h2 class="form-signin-heading">Don't have an account?</h2>
 		      			<a class="btn btn-lg btn-primary btn-block" type="button" href="?page=register">Register</a>
@@ -101,9 +101,14 @@ def login_home():
 
 	"""
 
+# This tutorial helped ALOT http://www.9lessons.info/2012/04/bootstrap-registration-form-tutorial.html
 def register_form():
 	print """
-		<h1>Pls register..... pls.</h1>
+		<div class="container">
+			<form class="form-horizontal" id="registration" methong="post">
+
+			</form>
+		</div>
 	"""
 
 def search_form():
@@ -201,59 +206,11 @@ def authenticate(username, password):
 
 # Adapted from perl version, TOOK A LOT OF DEBUGGING TO GET THIS TO WORK.
 def read_books():
-	global book_details
 
 	f = open(book_file,'r')
 
-	for line in f:
-		m = re.match('^\s*"(\d+X?)"\s*:\s*{\s*$', line)
-		if (m):
-			isbn = m.group(1)
-			continue
-		l = re.match('\s*"([^"]+)"\s*:\s*"(.*)",?\s*', line)
-		n = re.match('\s*"([^"]+)"\s*:\s*\[\s*', line)
-		if l:
-			field = l.group(1)
-			value = l.group(2)
-			if field in attribute_names:
-				attribute_names[field] += 1
-			else:
-				attribute_names[field] = 1
-			value = re.sub(r'([^\\]|^)\\"', r'\g<1>', value)
-
-			if isbn in book_details:
-				book_details[isbn][field] = {}
-				book_details[isbn][field] = value
-			else:
-				book_details[isbn] = {}
-				book_details[isbn][field] = {}
-				book_details[isbn][field] = value
-			#print isbn, " - ", field, ": ", value, "</br>"
-		elif n:
-			field = n.group(1)
-			if field in attribute_names:
-				attribute_names[field] += 1
-			else:
-				attribute_names[field] = 1
-			a = []
-			for line2 in f:
-				m = re.match('^\s*\]\s*,?\s*$',line2)
-				if m:
-					break
-				m = re.match('^\s*"(.*)"\s*,?\s*$',line2)
-				if m:		
-					a.append(m.group(1))
-			value = "\n".join(a)
-			value = re.sub(r'([^\\]|^)\\"', r'\g<1>"', value)
-
-			if isbn in book_details:
-				book_details[isbn][field] = {}
-				book_details[isbn][field] = value
-			else:
-				book_details[isbn] = {}
-				book_details[isbn][field] = {}
-				book_details[isbn][field] = value
-			#print isbn, " - ", field, ": ", value, "</br>"
+	book_details = json.load(f)
+	#attribute_names = book_details[""]
 
 	f.close()
 
@@ -262,19 +219,22 @@ def read_books():
 # and I defintely understand how it works indepth now after 
 # having to heavily modify it.
 def search_books_terms(search_terms):
+	global book_details
 
-	unknown_fields = []
-	for search_term in search_terms:
-		m = re.match(r'([^:]+):', search_term)
-		if (m and m.group(1) not in attribute_names):
-			unknown_fields.append(m.group(1))
+#	unknown_fields = []
+#	for search_term in search_terms:
+#		m = re.match(r'([^:]+):', search_term)
+#		if (m and m.group(1) not in attribute_names):
+#			unknown_fields.append(m.group(1))
+
 
 	matches = []
 	for isbn in (sorted(book_details)):
+		print isbn
 		n_matches = 0
 		if ("=default_search=" not in book_details[isbn]):
 			book_details[isbn]["=default_search="] = book_details[isbn]["title"]+"\n"+book_details[isbn]["authors"]
-
+			print book_details[isbn]["=default_search="]
 		for search_term in search_terms:
 			next_isbn = 0
 			match = 0
