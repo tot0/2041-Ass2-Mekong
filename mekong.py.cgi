@@ -4,7 +4,7 @@
 import cgi
 import cgitb
 import re, os
-import json
+import json, sqlite3
 from Book_class import Book
 #import Book_class
 cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
@@ -12,9 +12,8 @@ cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
 book_file = "books.json"
 orders_dir = "orders/"
 baskets_dir = "baskets/"
-user_dir = "users/"
+users_db = "users/users.db"
 last_error = ""
-attribute_names = {}
 user_details = {}
 
 def page_header():
@@ -106,8 +105,61 @@ def login_home():
 def register_form():
 	print """
 		<div class="container">
-			<form class="form-horizontal" id="registration" methong="post">
-
+			<form id="registration" role="form" method="post">
+				<fieldset>
+					<h3>Personal Details</h3>
+					<div class="form-group">
+						<label class="sr-only">Name</label>
+						<input id="name" class="form-control" type="text" name="name_reg" placeholder="Full Name">
+					</div>
+					<div class="form-group">
+						<label class="sr-only" for="username">Username</label>
+						<input id="username" class="form-control" type="text" name="username_reg" placeholder="Username" rel="popover" data-content="Please enter your desired username." data-original-title="Username">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">Password</label>
+						<input id="password" class="form-control" type="password" name="password_reg" placeholder="Password">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">Confirm Password</label>
+						<input id="password" class="form-control" type="password" name="password_con_reg" placeholder="Confirm Password">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">Email</label>
+						<input id="email" class="form-control" type="text" name="email_reg" placeholder="Email">
+					</div>
+					<hr style="border-top:1px solid #5a5a5a;">
+					<h3>Address Details</h3>
+					<div class="form-group">
+						<label class="sr-only">Street Address</label>
+						<input id="street" class="form-control" type="text" name="street_reg" placeholder="Street Address e.g. 16 Vantage Pl">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">City</label>
+						<input id="city" class="form-control" type="text" name="city_reg" placeholder="City">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">State</label>
+						<select id="state" class="form-control" name="state_reg">
+							<option>NSW</option>
+							<option>QLD</option>
+							<option>VIC</option>
+							<option>WA</option>
+							<option>SA</option>
+							<option>ACT</option>
+							<option>NT</option>
+							<option>TAS</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="sr-only">Postcode</label>
+							<input id="postcode" class="form-control" type="text" name="postcode_reg" placeholder="Postcode">
+					</div>
+					<div class="form-group">
+						<button class="btn btn-primary btn-lg" type="submit">Submit</button>
+						<input type="hidden" name="page_next" value="register_validate">
+					</div>
+				</fieldset>
 			</form>
 		</div>
 	"""
@@ -217,7 +269,6 @@ def auth_error(item):
         	<strong>Oops!</strong> %s
       	</div>
 	""" % item
-	login_form()
 
 def four_oh_four():
 	print """
@@ -273,7 +324,7 @@ def auth_username(username):
 	return True
 
 
-def auth_password(password):
+def auth_password(password, password_con):
 	global last_error
 
 	if (re.search(' ', password)):
@@ -284,13 +335,34 @@ def auth_password(password):
 		last_error = "Sorry we require passwords to be at least 5 characters long."
 		return False
 
+	if (password != password_con):
+		last_error = "Oops! It appears your passwords don't match. :("
+		return False
+
 	return True
 
 def authenticate(username, password):
 	return True
 
+def register_validate(form):
 
-# Adapted from perl version, TOOK A LOT OF DEBUGGING TO GET THIS TO WORK.
+	if (auth_username(form.getvalue('username_reg'))):
+		username = form.getvalue('username_reg')
+	else:
+		auth_error(last_error)
+		register_form()
+		return False
+
+	if (auth_password(form.getvalue('password_reg'), form.getvalue('password_con_reg'))):
+		password = form.getvalue('password_reg')
+	else:
+		auth_error(last_error)
+		register_form()
+		return False
+
+	return True
+
+
 def read_books():
 
 	f = open(book_file,'r')
@@ -392,7 +464,20 @@ def search_results(search_terms):
 		display_search_result(matches[i])
 	end_table()
 
-def load_page(page, isbn):
+def read_user():
+	con = sqlite3.connect(users_db)
+
+	with con:
+		cur = con.cursor()
+		cur.execute("SELECT SQLITE_VERSION()")
+
+		data = cur.fetchone()
+
+		print "SQLite version: %s" % data
+
+
+
+def load_page(page, isbn, form):
 
 	if (page == "book"):
 		if (isbn == None):
@@ -400,9 +485,15 @@ def load_page(page, isbn):
 		else:	
 			book_page(isbn)
 	elif (page == "register"):
-		register_form()
+		if ("page_next" in form and form.getvalue("page_next") == "register_validate"):
+			if (register_validate(form)):
+				login_home()
+		else:
+			register_form()
 	elif (page == "login_home"):
 		login_home()
+	elif (page == "user"):
+		read_user()
 
 
 def main():
@@ -416,7 +507,7 @@ def main():
 	search_terms = form.getvalue("search_terms")
 
 	if ("page" in form):
-		load_page(page, isbn)
+		load_page(page, isbn, form)
 	else:
 		if ("search_terms" in form):
 			search_results(search_terms)
@@ -426,8 +517,10 @@ def main():
 					load_page("login_home")
 				else:
 					auth_error(last_error)
+					login_form()
 			else:
 				auth_error(last_error)
+				login_form()
 		else:
 			home_page()
 			login_form()

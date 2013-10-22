@@ -48,7 +48,6 @@ html {
 
 body {
   margin: 0;
-  padding-top: 70px;
 }
 
 a:focus {
@@ -306,7 +305,6 @@ body {
   line-height: 1.428571429;
   color: #c8c8c8;
   background-color: #272b30;
-  padding-top: 70px;
 }
 
 input,
