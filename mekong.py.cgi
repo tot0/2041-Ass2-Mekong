@@ -23,15 +23,16 @@ if ("HTTP_COOKIE" in os.environ):
 		name = cookie[0]
 		value = cookie[1]
 		if (name == "user_id"):
-			cur_user_id = int(value)
+			cur_user_id = value
 else:
 	cur_user_id = None
 
-def page_header(cookie, user_id):
+def page_header(cookie=False, user_id=0):
 	if (cookie):
-		cookie = Cookie.SimpleCookie()
-		cookie['user_id'] = user_id
-		print cookie
+		user_cookie = Cookie.SimpleCookie()
+		user_cookie['user_id'] = user_id
+		print user_cookie
+
 	print "Content-type: text/html;charset=utf-8"
 	print ""
 	print """
@@ -47,9 +48,9 @@ def page_header(cookie, user_id):
 		<!-- Bootstrap/swatch -->
 		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
-		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+		<link href="//netdna.bootstrapcdn.com/bootswatch/3.0.0/slate/bootstrap.min.css" rel="stylesheet">
 		<link href="stylish-portfolio.css" rel="stylesheet">
-		<link href="flat-ui.css" rel="stylesheet">
+		<!-- <link href="flat-ui.css" rel="stylesheet"> -->
 		<link href="mekong.css" rel="stylesheet">
 
 	</head>
@@ -61,7 +62,7 @@ def home_page():
 	print """
 		<!-- Full Page Image Header Area -->
 		<div id="top" class="header">
-			<div class="demo-headline">
+			<div class="vert-text">
 				<h1 class="logo">Mekong</h1>
 				<h3 class="logo">The <em>Authors</em> Channel To <em>You</em></h3>
 				<form class="">
@@ -112,11 +113,11 @@ def login_home():
 	print """
 		<div class="container">
 			<h1>Mekong</h1>
-			<h3>isn't she just beaut...</h3>
+			<h3>isn't she just beaut... %s</h3>
 			<img src="./mekong_bg.jpg"/>
 		</div>
 
-	"""
+	""" % (cur_user_id)
 
 # This tutorial helped ALOT http://www.9lessons.info/2012/04/bootstrap-registration-form-tutorial.html
 def register_form():
@@ -358,39 +359,10 @@ def validate_user(validate_code):
 		
 		for row in rows:
 			if (row['id'] == validate_code):
-				returm True
+				return True
 
 	last_error = "This validation code is invalid!"
 	return False
-
-def auth_login(username, password):
-	if (not auth_username(username)):
-		return False
-	if (not auth_password(password)):
-		return False
-
-	con = sqlite3.connect(db_dir)
-
-	with con:
-		con.row_factory = sqlite3.Row
-		cur = con.cursor()
-		cur.execute('select * from users')
-
-		rows = cur.fetchall()
-
-		for row in rows:
-			if (row["username"] == username):
-				break
-			else:
-				last_error = "Sorry that we can't find that username in our banks."
-				return False
-
-	if (not row["password_hash"] == password):
-		last_error = "Sorry the password you've entered appears to be incorrect."
-		return False
-
-	cur_user_id = row["id"]
-	return True
 
 
 def auth_username(username):
@@ -424,8 +396,37 @@ def auth_password(password, password_con):
 
 	return True
 
-def authenticate(username, password):
-	return True
+def auth_login(username, password):
+	global cur_user_id
+	
+	if (not auth_username(username)):
+		return False
+	if (not auth_password(password, password)):
+		return False
+
+	con = sqlite3.connect(db_dir)
+
+	with con:
+		con.row_factory = sqlite3.Row
+		cur = con.cursor()
+		cur.execute('select * from users')
+
+		rows = cur.fetchall()
+
+		for row in rows:
+			if (row["username"] == username):
+				break
+			else:
+				last_error = "Sorry that we can't find that username in our banks."
+				return False
+
+
+	if (not row["password_hash"] == password):
+		last_error = "Sorry the password you've entered appears to be incorrect."
+		return False
+	else:
+		cur_user_id = row["id"]
+		return True
 
 def register_validate(form):
 
@@ -443,24 +444,24 @@ def register_validate(form):
 		register_form()
 		return False
 
-	user = (form.getvalue('username_reg'),
-			form.getvalue('first_name_reg'),
-			form.getvalue('last_name_reg'),
-			form.getvalue('email_reg'),
-			form.getvalue('password_reg'),
-			form.getvalue('street_reg'),
-			form.getvalue('city_reg'),
-			form.getvalue('street_reg'),
-			form.getvalue('postcode_reg'),
-			'No'
-			)
-
 	con = sqlite3.connect(db_dir)
 
 	with con:
 		cur = con.cursor()
 
-		cur.execute("insert into users values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", user)		
+		user = (cur.lastrowid,
+		form.getvalue('username_reg'), 
+		form.getvalue('first_name_reg'), 
+		form.getvalue('last_name_reg'), 
+		form.getvalue('email_reg'), 
+		form.getvalue('password_reg'), 
+		form.getvalue('street_reg'), 
+		form.getvalue('city_reg'), 
+		form.getvalue('street_reg'), 
+		form.getvalue('postcode_reg'), 
+		'No')
+
+		cur.execute("insert into users values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", user)		
 
 
 	return True
@@ -579,8 +580,11 @@ def read_user():
 		print "SQLite version: %s" % data
 
 
+def send_email():
+	return True
 
-def load_page(page, isbn, form):
+
+def load_page(page, isbn=None, form=None):
 
 	if (page == "book"):
 		if (isbn == None):
@@ -599,7 +603,7 @@ def load_page(page, isbn, form):
 	elif (page == "user"):
 		read_user()
 	elif (page == "validate"):
-		validate_code = form.getvalue('code');
+		validate_code = form.getvalue('code')
 		if (validate_user(validate_code)):
 			validation_success()
 		else:
@@ -610,10 +614,10 @@ def load_page(page, isbn, form):
 
 
 def main():
+
 	form = cgi.FieldStorage()
 	page = form.getvalue("page")
 	isbn = form.getvalue("isbn")
-	validate = form.getvalue('validate')
 	username = form.getvalue("username")
 	password = form.getvalue("password")
 	search_terms = form.getvalue("search_terms")
@@ -627,12 +631,14 @@ def main():
 			search_results(search_terms)
 		elif ("username" in form and "password" in form):
 			if (auth_login(username, password)):
-				page_header(1, cur_user_id)
+				page_header(True, cur_user_id)
 				load_page("login_home")
 			else:
+				page_header()
 				auth_error(last_error)
 				login_form()
 		else:
+			page_header()
 			home_page()
 			login_form()
 
