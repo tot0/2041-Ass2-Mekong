@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 #Lucas Pickup, z3424653, lpickup
 
-import cgi
+import cgi, Cookie
 import cgitb
 import re, os
 import json, sqlite3
@@ -12,11 +12,26 @@ cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
 book_file = "books.json"
 orders_dir = "orders/"
 baskets_dir = "baskets/"
-users_db = "users/users.db"
+db_dir = "mekong.db"
 last_error = ""
-user_details = {}
 
-def page_header():
+if ("HTTP_COOKIE" in os.environ):
+	cookies = os.environ['HTTP_COOKIE']
+	cookies = cookies.split('; ')
+	for cookie in cookies:
+		cookie = cookie.split('=')
+		name = cookie[0]
+		value = cookie[1]
+		if (name == "user_id"):
+			cur_user_id = int(value)
+else:
+	cur_user_id = None
+
+def page_header(cookie, user_id):
+	if (cookie):
+		cookie = Cookie.SimpleCookie()
+		cookie['user_id'] = user_id
+		print cookie
 	print "Content-type: text/html;charset=utf-8"
 	print ""
 	print """
@@ -32,8 +47,10 @@ def page_header():
 		<!-- Bootstrap/swatch -->
 		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
-		<link href="./stylish-portfolio.css" rel="stylesheet">
-		<link href="./bootstrap.css" rel="stylesheet">
+		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+		<link href="stylish-portfolio.css" rel="stylesheet">
+		<link href="flat-ui.css" rel="stylesheet">
+		<link href="mekong.css" rel="stylesheet">
 
 	</head>
 
@@ -44,9 +61,9 @@ def home_page():
 	print """
 		<!-- Full Page Image Header Area -->
 		<div id="top" class="header">
-			<div class="vert-text">
-				<h1 class="diff_shadow">Mekong</h1>
-				<h3 class="diff_shadow">The <em>Authors</em> Channel To <em>You</em></h3>
+			<div class="demo-headline">
+				<h1 class="logo">Mekong</h1>
+				<h3 class="logo">The <em>Authors</em> Channel To <em>You</em></h3>
 				<form class="">
 					<style>
 						.input-group-lg-home {
@@ -109,8 +126,12 @@ def register_form():
 				<fieldset>
 					<h3>Personal Details</h3>
 					<div class="form-group">
-						<label class="sr-only">Name</label>
-						<input id="name" class="form-control" type="text" name="name_reg" placeholder="Full Name">
+						<label class="sr-only">First Name</label>
+						<input id="name" class="form-control" type="text" name="first_name_reg" placeholder="First Name">
+					</div>
+					<div class="form-group">
+						<label class="sr-only">Last Name</label>
+						<input id="name" class="form-control" type="text" name="last_name_reg" placeholder="Last Name">
 					</div>
 					<div class="form-group">
 						<label class="sr-only" for="username">Username</label>
@@ -255,6 +276,16 @@ def book_page(isbn):
 
 	""" % (book.largeimageurl, book.title, book.all_authors, book.productdescription, book.publication_date, book.publisher, book.price, book.isbn)
 
+def email_validate_page():
+	print """
+		<div id="wrapper">
+			<div id="cell">
+				<div class="content">
+					<h1>An email has been dispatched via boat!</h1>
+				</div>
+			</div>
+		</div>
+	"""
 
 def auth_error(item):
 	print """
@@ -269,6 +300,15 @@ def auth_error(item):
         	<strong>Oops!</strong> %s
       	</div>
 	""" % item
+
+def validation_success():
+	print """
+		<div class="jumbotron">
+			<h1>Validation Successful</h1>
+			<a class="btn btn-primary btn-lg" href="?">Drift Home</a>
+			<a class="btn btn-primary btn-lg" href="?page=login>Login</a>
+		</div>
+	"""
 
 def four_oh_four():
 	print """
@@ -308,6 +348,49 @@ def page_trailer():
 </html>
 	"""
 
+def validate_user(validate_code):
+	con = sqlite3.connect(db_dir)
+
+	with con:
+		con.row_factory = sqlite3.Row
+		cur = con.cursor()
+		cur.execute('select * from users')
+		
+		for row in rows:
+			if (row['id'] == validate_code):
+				returm True
+
+	last_error = "This validation code is invalid!"
+	return False
+
+def auth_login(username, password):
+	if (not auth_username(username)):
+		return False
+	if (not auth_password(password)):
+		return False
+
+	con = sqlite3.connect(db_dir)
+
+	with con:
+		con.row_factory = sqlite3.Row
+		cur = con.cursor()
+		cur.execute('select * from users')
+
+		rows = cur.fetchall()
+
+		for row in rows:
+			if (row["username"] == username):
+				break
+			else:
+				last_error = "Sorry that we can't find that username in our banks."
+				return False
+
+	if (not row["password_hash"] == password):
+		last_error = "Sorry the password you've entered appears to be incorrect."
+		return False
+
+	cur_user_id = row["id"]
+	return True
 
 
 def auth_username(username):
@@ -359,6 +442,26 @@ def register_validate(form):
 		auth_error(last_error)
 		register_form()
 		return False
+
+	user = (form.getvalue('username_reg'),
+			form.getvalue('first_name_reg'),
+			form.getvalue('last_name_reg'),
+			form.getvalue('email_reg'),
+			form.getvalue('password_reg'),
+			form.getvalue('street_reg'),
+			form.getvalue('city_reg'),
+			form.getvalue('street_reg'),
+			form.getvalue('postcode_reg'),
+			'No'
+			)
+
+	con = sqlite3.connect(db_dir)
+
+	with con:
+		cur = con.cursor()
+
+		cur.execute("insert into users values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", user)		
+
 
 	return True
 
@@ -487,37 +590,45 @@ def load_page(page, isbn, form):
 	elif (page == "register"):
 		if ("page_next" in form and form.getvalue("page_next") == "register_validate"):
 			if (register_validate(form)):
-				login_home()
+				send_email()
+				email_validate_page()
 		else:
 			register_form()
 	elif (page == "login_home"):
 		login_home()
 	elif (page == "user"):
 		read_user()
+	elif (page == "validate"):
+		validate_code = form.getvalue('code');
+		if (validate_user(validate_code)):
+			validation_success()
+		else:
+			auth_error(last_error)
+	elif (page == "login"):
+		login_form()
+
 
 
 def main():
-	page_header()
-
 	form = cgi.FieldStorage()
 	page = form.getvalue("page")
 	isbn = form.getvalue("isbn")
+	validate = form.getvalue('validate')
 	username = form.getvalue("username")
 	password = form.getvalue("password")
 	search_terms = form.getvalue("search_terms")
 
 	if ("page" in form):
+		page_header()
 		load_page(page, isbn, form)
 	else:
 		if ("search_terms" in form):
+			page_header()
 			search_results(search_terms)
 		elif ("username" in form and "password" in form):
-			if (auth_username(username)):
-				if (auth_password(password)):
-					load_page("login_home")
-				else:
-					auth_error(last_error)
-					login_form()
+			if (auth_login(username, password)):
+				page_header(1, cur_user_id)
+				load_page("login_home")
 			else:
 				auth_error(last_error)
 				login_form()
