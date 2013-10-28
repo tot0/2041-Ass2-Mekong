@@ -1,33 +1,19 @@
 #!/usr/bin/python2.7
 #Lucas Pickup, z3424653, lpickup
 
+# Standard python modules.
 import cgi, Cookie
 import cgitb
-import re, os
-import json, sqlite3
-from Book_class import Book
-#import Book_class
 cgitb.enable(display=0, logdir="./logs")  # for troubleshooting
+import re, os
 
-book_file = "books.json"
-db_dir = "mekong.db"
-last_error = ""
+# My own custom modules.
+import config
+from html import *
+from database import *
+from validation import *
 
-def read_user(user_id):
-	con = sqlite3.connect(db_dir)
-
-	with con:
-		con.row_factory = sqlite3.Row
-		cur = con.cursor()
-		cur.execute('select * from users')
-		
-		rows = cur.fetchall()
-
-		for row in rows:
-			if (row['id'] == user_id):
-				break
-	return row
-
+# Set global user variables by reading the user's cookies.
 if ("HTTP_COOKIE" in os.environ):
 	cookies = os.environ['HTTP_COOKIE']
 	cookies = cookies.split('; ')
@@ -36,16 +22,18 @@ if ("HTTP_COOKIE" in os.environ):
 		name = cookie[0]
 		value = cookie[1]
 		if (name == "user_id"):
-			cur_user_id = value
-			cur_user = read_user(cur_user_id)
+			config.cur_user_id = value
+			config.cur_user = read_user(config.cur_user_id, None)
+		else:
+			config.cur_user_id = None
+			config.cur_user = None
 
 else:
-	cur_user_id = None
-	cur_user = None
+	config.cur_user_id = None
+	config.cur_user = None
 
-def page_header(cookie=0, user_id=0):
-	global cur_user_id
 
+def set_cookie(cookie, user_id):
 	if (cookie == 1):
 		user_cookie = Cookie.SimpleCookie()
 		user_cookie['user_id'] = user_id
@@ -57,90 +45,227 @@ def page_header(cookie=0, user_id=0):
 		print user_cookie
 
 
-	if (cur_user_id != None):
-		first_name = cur_user['first_name']
-		disabled = ""
+##################################################################
+# Authorisation functions
+##################################################################
+
+
+
+
+
+def validate_user(validate_code):
+	con = sqlite3.connect(config.db_dir)
+
+	with con:
+		con.row_factory = sqlite3.Row
+		cur = con.cursor()
+		cur.execute('select * from users')
+		
+		for row in rows:
+			if (row['id'] == validate_code):
+
+				return True
+
+	config.last_error = "This validation code is invalid!"
+	return False
+
+
+##################################################################
+# Search Functions
+##################################################################
+
+# This took just as long as read_books, but now it's working,
+# and I defintely understand how it works indepth now after 
+# having to heavily modify it.
+def search_books_terms(search_terms):
+	books = read_books()
+
+	matches = []
+
+#	unknown_fields = []
+#	for search_term in search_terms:
+#		m = re.match(r'([^:]+):', search_term)
+#		if (m and m.group(1) not in ):
+#			unknown_fields.append(m.group(1))
+
+	for book in books:
+		n_matches = 0
+		for search_term in search_terms:
+			next_book = 0
+			match = 0
+			term = search_term
+			m = re.match(r'([^:]+):(.*)', search_term)
+			if m:
+				search_type = m.group(1)
+				term = m.group(2)
+
+			field = book['default_search']
+			field = re.sub(r'[!().:]', '', field)
+			#regex = re.compile('\s+%s\s+' % term.lower())
+			m = re.search(term.lower(), field.lower())#regex.search(field.lower())
+			if (m):
+				match = 1
+			#regex = re.compile('^%s\s+' % term.lower())
+			#m = regex.search(field.lower())
+			#if (m):
+			#	match = 1
+			if match:
+				n_matches += 1
+				next_book = 1
+				break
+
+		if (n_matches > 0):
+			matches.append(book)
+		if (next_book):
+			next_book = 0
+			continue
+
+	# Makes a dict key'd by the isbn's with the sales rank as the value.
+	matches_sorted = {}
+	for book in matches:
+		if ("sales_rank" not in book):
+			sales_rank = 10000000
+		else:
+			sales_rank = book['sales_rank']
+		matches_sorted[book['isbn']] = int(sales_rank)
+
+	# Returns a list of tuples in the form [key, value] sorted by the value of matches_sorted dict.
+	matches = [(k) for k in sorted(matches_sorted, key=matches_sorted.get)]
+
+	return matches
+
+
+def search_books(search_string):
+	search_string = re.sub('\s*$', '', search_string)
+	search_string = re.sub('^\s*', '', search_string)
+	return search_books_terms(search_string.split())
+
+def search_results(search_terms):
+	matches = search_books(search_terms)
+	matches_list = [matches[k][0] for k in xrange(len(matches))]
+	start_table()
+	if (len(matches) < 20):
+		num_results = len(matches)
 	else:
-		first_name = "No User"
-		disabled = "disabled" 
+		num_results = 20
+	for i in xrange(num_results):
+		display_search_result(matches[i])
+	end_table()
 
-	print "Content-type: text/html;charset=utf-8"
-	print ""
-	print """
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<title>mekong.com.au</title>
 
-		<!-- Favicon -->
-		<link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
-		<link rel="icon" href="./favicon.ico" type="image/x-icon">
 
-		<!-- Bootstrap/swatch -->
-		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
-		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
-		<link href="//netdna.bootstrapcdn.com/bootswatch/3.0.0/slate/bootstrap.min.css" rel="stylesheet">
-		<link href="stylish-portfolio.css" rel="stylesheet">
-		<link href="flat-ui.css" rel="stylesheet">
-		<link href="mekong.css" rel="stylesheet">
+def send_email():
+	return True
 
-	</head>
 
-	<body style="padding-top: 50px;">
+##################################################################
+# Control Functions
+##################################################################
 
-		<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-			<!-- Brand and toggle get grouped for better mobile display -->
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-				<span class="sr-only">Toggle navigation</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="?" style="padding:5px 15px;"><img src="mekong_sm.png" height="40" width="40" /></a>
-			</div>
+def load_page(page, isbn=None, form=None):
 
-			<!-- Collect the nav links, forms, and other content for toggling -->
-			<div class="collapse navbar-collapse navbar-ex1-collapse">
-				<ul class="nav navbar-nav">
-					<!-- <li><a href="#">Link</a></li> -->
-				</ul>
-				<form class="navbar-form navbar-left">
-					<style>
-						.input-group-lg-nav {
-							max-width: 500px;
-							padding: 0px;
-							margin: 0 auto;
-						}
-					</style>
-					<div class="input-group input-group-lg-nav">
-						<input type="text" class="form-control" placeholder="Search for books..." name="search_terms">
-						<span class="input-group-btn">
-						<button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-search"></span></button>
-						</span>
-					</div>
+	if (page == "book"):
+		if (isbn == None):
+			page_header()
+			four_oh_four()
+		else:
+			page_header()
+			book_page(isbn)
+	elif (page == "register"):
+		if ("page_next" in form and form.getvalue("page_next") == "register_validate"):
+			if (register_validate(form)):
+				page_header()
+				send_email()
+				email_validate_page()
+		else:
+			page_header()
+			register_form()
+	elif (page == "login_home"):
+		login_home()
+	elif (page == "user"):
+		page_header()
+		read_user()
+	elif (page == "validate"):
+		validate_code = form.getvalue('code')
+		if (validate_user(validate_code)):
+			page_header()
+			validation_success()
+		else:
+			page_header()
+			auth_error(config.last_error)
+	elif (page == "login"):
+		page_header()
+		login_form()
+	elif (page == "logout"):
+		set_cookie(2, config.cur_user_id)
+		config.cur_user_id = None
+		config.cur_user = None
+		page_header()
+		home_page()
+		login_form()
+	elif (page == "cart"):
+		if ('book_add' in form):
+			add_to_cart(form.getvalue('book_add'), form.getvalue('num_books'))
+		page_header()
+		cart_page()
+	elif (page == "update_cart"):
+		update_cart(form)
+		page_header()
+		cart_page()
+	elif (page == "checkout"):
+		page_header()
+		checkout_page()
+	elif (page =="checkout_complete"):
+		if (validate_checkout(form)):
+			write_order(config.cur_user_id, form.getvalue('cc_checkout'), form.getvalue('cc_expire_checkout'))
+			page_header()
+			orders_page()
+		else:
+			page_header()
+			auth_error(last_error)
+			checkout_page()
+	elif (page == "orders"):
+		page_header()
+		orders_page()
+	else:
+		page_header()
+		four_oh_four()
 
-				</form>
-				<ul class="nav navbar-nav navbar-right">
-					<li class="dropdown %s">
-						<a href="#" class="dropdown-toggle %s" data-toggle="dropdown">%s <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="?page=account">Account</a></li>
-							<li><a href="?page=basket">Basket</a></li>
-							<li><a href="?page=orders">Orders</a></li>
-							<li><a href="?page=logout">Log Out</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div><!-- /.navbar-collapse -->
-		</nav>
 
-	""" % (disabled, disabled, first_name)
+def main():
 
-def home_page():
-	print """
-		<!-- Full Page Image Header Area -->
-		<div id="top" class="header">
-			<div class="vert-text">
-				<h1 class="logo">Mekong</h1>
-				<h3 class="logo">The <em>Authors</em
+	form = cgi.FieldStorage()
+	page = form.getvalue("page")
+	isbn = form.getvalue("isbn")
+	username = form.getvalue("username")
+	password = form.getvalue("password")
+	search_terms = form.getvalue("search_terms")
+
+	if ("page" in form):
+		load_page(page, isbn, form)
+	else:
+		if ("search_terms" in form):
+			page_header()
+			search_results(search_terms)
+		elif ("username" in form and "password" in form):
+			if (auth_login(username, password)):
+				config.cur_user = read_user(config.cur_user_id, None)
+				set_cookie(1, config.cur_user_id)
+				page_header()
+				load_page("login_home")
+			else:
+				page_header()
+				auth_error(config.last_error)
+				login_form()
+		else:
+			page_header()
+			home_page()
+			if (config.cur_user_id == None):
+				login_form()
+
+
+	page_trailer()
+
+
+
+main()
