@@ -12,8 +12,12 @@ import config
 from html import *
 from database import *
 from validation import *
+from email1 import *
 
 # Set global user variables by reading the user's cookies.
+
+config.base_path = re.sub(r'mekong\.py\.cgi$', '', os.environ['SCRIPT_URI'])
+
 if ("HTTP_COOKIE" in os.environ):
 	cookies = os.environ['HTTP_COOKIE']
 	cookies = cookies.split('; ')
@@ -45,31 +49,14 @@ def set_cookie(cookie, user_id):
 		user_cookie['user_id']['expires'] = 0
 		print user_cookie
 
-
 ##################################################################
-# Authorisation functions
+# Misc Functions
 ##################################################################
 
+def gen_verify_code(user_id):
+	code = user_id
 
-
-
-
-def validate_user(validate_code):
-	con = sqlite3.connect(config.db_dir)
-
-	with con:
-		con.row_factory = sqlite3.Row
-		cur = con.cursor()
-		cur.execute('select * from users')
-		
-		for row in rows:
-			if (row['id'] == validate_code):
-
-				return True
-
-	config.last_error = "This validation code is invalid!"
-	return False
-
+	return code
 
 ##################################################################
 # Search Functions
@@ -154,11 +141,6 @@ def search_results(search_terms):
 	end_table()
 
 
-
-def send_email():
-	return True
-
-
 ##################################################################
 # Control Functions
 ##################################################################
@@ -176,7 +158,7 @@ def load_page(page, isbn=None, form=None):
 		if ("page_next" in form and form.getvalue("page_next") == "register_validate"):
 			if (register_validate(form)):
 				page_header()
-				send_email()
+				verify_email(form.getvalue('email_reg'), gen_verify_code(read_user(None, form.getvalue('username_reg'))['id']))
 				email_validate_page()
 		else:
 			page_header()
@@ -186,7 +168,7 @@ def load_page(page, isbn=None, form=None):
 	elif (page == "user"):
 		page_header()
 		read_user()
-	elif (page == "validate"):
+	elif (page == "verification"):
 		validate_code = form.getvalue('code')
 		if (validate_user(validate_code)):
 			page_header()
@@ -234,7 +216,7 @@ def load_page(page, isbn=None, form=None):
 		account_page()
 	elif (page == "updated_details"):
 		if (register_validate(form)):
-			config.cur_user = read_user()
+			config.cur_user = read_user(config.cur_user_id, None)
 			page_header()
 			account_page()
 	else:
