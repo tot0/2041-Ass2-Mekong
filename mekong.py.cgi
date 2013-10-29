@@ -37,6 +37,7 @@ def set_cookie(cookie, user_id):
 	if (cookie == 1):
 		user_cookie = Cookie.SimpleCookie()
 		user_cookie['user_id'] = user_id
+		user_cookie['user_id']['expires'] = "3M"
 		print user_cookie
 	elif (cookie == 2):
 		user_cookie = Cookie.SimpleCookie()
@@ -200,7 +201,7 @@ def load_page(page, isbn=None, form=None):
 		set_cookie(2, config.cur_user_id)
 		config.cur_user_id = None
 		config.cur_user = None
-		page_header()
+		page_header(1)
 		home_page()
 		login_form()
 	elif (page == "cart"):
@@ -218,6 +219,7 @@ def load_page(page, isbn=None, form=None):
 	elif (page =="checkout_complete"):
 		if (validate_checkout(form)):
 			write_order(config.cur_user_id, form.getvalue('cc_checkout'), form.getvalue('cc_expire_checkout'))
+			clear_user_cart(config.cur_user_id)
 			page_header()
 			orders_page()
 		else:
@@ -227,6 +229,14 @@ def load_page(page, isbn=None, form=None):
 	elif (page == "orders"):
 		page_header()
 		orders_page()
+	elif (page == "account"):
+		page_header()
+		account_page()
+	elif (page == "updated_details"):
+		if (register_validate(form)):
+			config.cur_user = read_user()
+			page_header()
+			account_page()
 	else:
 		page_header()
 		four_oh_four()
@@ -252,16 +262,19 @@ def main():
 				config.cur_user = read_user(config.cur_user_id, None)
 				set_cookie(1, config.cur_user_id)
 				page_header()
-				load_page("login_home")
+				home_page()
 			else:
 				page_header()
 				auth_error(config.last_error)
 				login_form()
 		else:
-			page_header()
-			home_page()
 			if (config.cur_user_id == None):
+				page_header(1)
+				home_page()
 				login_form()
+			else:
+				page_header()
+				home_page()
 
 
 	page_trailer()
