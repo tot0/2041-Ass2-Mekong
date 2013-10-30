@@ -65,7 +65,7 @@ def gen_verify_code(user_id):
 # This took just as long as read_books, but now it's working,
 # and I defintely understand how it works indepth now after 
 # having to heavily modify it.
-def search_books_terms(search_terms):
+def search_books_terms(search_terms, catergory="default_search"):
 	books = read_books()
 
 	matches = []
@@ -82,21 +82,11 @@ def search_books_terms(search_terms):
 			next_book = 0
 			match = 0
 			term = search_term
-			m = re.match(r'([^:]+):(.*)', search_term)
-			if m:
-				search_type = m.group(1)
-				term = m.group(2)
-
-			field = book['default_search']
+			field = str(book[catergory])
 			field = re.sub(r'[!().:]', '', field)
-			#regex = re.compile('\s+%s\s+' % term.lower())
-			m = re.search(term.lower(), field.lower())#regex.search(field.lower())
+			m = re.search(term.lower(), field.lower())
 			if (m):
 				match = 1
-			#regex = re.compile('^%s\s+' % term.lower())
-			#m = regex.search(field.lower())
-			#if (m):
-			#	match = 1
 			if match:
 				n_matches += 1
 				next_book = 1
@@ -123,13 +113,13 @@ def search_books_terms(search_terms):
 	return matches
 
 
-def search_books(search_string):
+def search_books(search_string, catergory):
 	search_string = re.sub('\s*$', '', search_string)
 	search_string = re.sub('^\s*', '', search_string)
-	return search_books_terms(search_string.split())
+	return search_books_terms(search_string.split(), catergory)
 
-def search_results(search_terms):
-	matches = search_books(search_terms)
+def search_results(search_terms, catergory):
+	matches = search_books(search_terms, catergory)
 	matches_list = [matches[k][0] for k in xrange(len(matches))]
 	start_table()
 	if (len(matches) < 20):
@@ -137,7 +127,7 @@ def search_results(search_terms):
 	else:
 		num_results = 20
 	for i in xrange(num_results):
-		display_search_result(matches[i])
+		display_search_result(matches[i],)
 	end_table()
 
 
@@ -163,8 +153,6 @@ def load_page(page, isbn=None, form=None):
 		else:
 			page_header()
 			register_form()
-	elif (page == "login_home"):
-		login_home()
 	elif (page == "user"):
 		page_header()
 		read_user()
@@ -219,6 +207,19 @@ def load_page(page, isbn=None, form=None):
 			config.cur_user = read_user(config.cur_user_id, None)
 			page_header()
 			account_page()
+	elif (page == "recover_pass"):
+		page_header()
+		recover_pass_page()
+	elif (page == "recover_sent"):
+		user = check_user_email(form.getvalue('recovery_email'))
+		if (user != None):
+			recovery_email(user['email'], reset_user_pass(user['id']))
+			page_header()
+			recover_email_sent()
+		else:
+			page_header()
+			auth_error(config.last_error)
+			recover_pass_page()
 	else:
 		page_header()
 		four_oh_four()
@@ -238,7 +239,7 @@ def main():
 	else:
 		if ("search_terms" in form):
 			page_header()
-			search_results(search_terms)
+			search_results(search_terms, form.getvalue('filter'))
 		elif ("username" in form and "password" in form):
 			if (auth_login(username, password)):
 				config.cur_user = read_user(config.cur_user_id, None)
