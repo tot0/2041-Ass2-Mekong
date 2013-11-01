@@ -118,17 +118,30 @@ def search_books(search_string, catergory):
 	search_string = re.sub('^\s*', '', search_string)
 	return search_books_terms(search_string.split(), catergory)
 
-def search_results(search_terms, catergory):
+def search_results(search_terms, catergory, page_num):
 	matches = search_books(search_terms, catergory)
 	matches_list = [matches[k][0] for k in xrange(len(matches))]
-	start_table()
-	if (len(matches) < 20):
-		num_results = len(matches)
+	
+	if ((len(matches) / 50)%50 == 0 and (len(matches) / 50) > 1):
+		num_pages = int((len(matches) / 50))
 	else:
-		num_results = 20
-	for i in xrange(num_results):
+		num_pages = int(len(matches) / 50) + 1
+	pag = True
+	if (num_pages == 1):
+		start = 0
+		stop = len(matches)
+		pag = False
+	elif (int(page_num) >= num_pages):
+		start = (int(num_pages) * 50) - 49
+		stop = len(matches)
+	else:
+		start = (int(page_num) * 50) - 50
+		stop = int(page_num) * 50
+
+	start_table(str(start + 1) + "-" + str(stop), len(matches))
+	for i in xrange(start, stop):
 		display_search_result(matches[i],)
-	end_table()
+	end_table(pag, num_pages)
 
 
 ##################################################################
@@ -239,7 +252,7 @@ def main():
 	else:
 		if ("search_terms" in form):
 			page_header()
-			search_results(search_terms, form.getvalue('filter'))
+			search_results(search_terms, form.getvalue('filter'), form.getvalue('page_num'))
 		elif ("username" in form and "password" in form):
 			if (auth_login(username, password)):
 				config.cur_user = read_user(config.cur_user_id, None)
