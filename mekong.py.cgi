@@ -41,7 +41,6 @@ def set_cookie(cookie, user_id):
 	if (cookie == 1):
 		user_cookie = Cookie.SimpleCookie()
 		user_cookie['user_id'] = user_id
-		user_cookie['user_id']['expires'] = "3M"
 		print user_cookie
 	elif (cookie == 2):
 		user_cookie = Cookie.SimpleCookie()
