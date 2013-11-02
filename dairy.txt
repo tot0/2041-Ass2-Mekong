@@ -1,0 +1,137 @@
+commit 2d1f676a6406648e2fc205086856f234f6d45105
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 16:40:25 2013 +1100
+
+    Fixed a little sql error when searching for similar othors, issues with the like operator and authors with silly apostrophies in their names.
+
+commit 893b74b1717e9d5a1d4354b0b1bb303465d714ab
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 16:31:01 2013 +1100
+
+    Renamed mekong.py.cgi to mekong.cgi so I will be ready to submit, might make a few more small input validation changes tomorrow though.
+
+commit 1762bdcda8db996e679f3435500cdfe7613888e2
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 16:28:45 2013 +1100
+
+    Not sure how many of these files were actually in the git repo or not, but mekong.py.cgi was, ohwell my messages are relatively informative on what i was working on. Pretty much ready to submit, fixed up a bunch of stuff like adding to cart while not logged in, and cookies not working on ice weasel. Moved all my html stuff liek css and js into assets folder, bit cleaner. I guess its time to tar this all and then test it in a fresh environment.
+
+commit e64fc4ed9b1097fcb32ede345127159ae4011a25
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 02:10:13 2013 +1100
+
+    Fixed small bug in searching from homepage using the large search box with no filter, it didnt have the value filter defined. So it got confused.
+
+commit 038c2d89e3cbcb23cb141591812ad85a313d30a3
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Fri Nov 1 13:32:29 2013 +1100
+
+    Pretty much finished now, still havnt fully tested password reseting but everything frm 0-3 covered, plus im using a db, p;agination, more by this author on book pages, and my site looks VERY nice compared to what the norm will probably be. Should be enough level 4 features in there for a very good mark. i should clean up some of my python though, it can gfet  abit ugly.
+
+commit a5dce16e6e8067e5fa3acd342e3dfc21c0ce2ee3
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Thu Oct 31 00:40:27 2013 +1100
+
+    Should have password resetting via email working now, will do more comprehensive tests tomorrow morning. Did some nice UI fixes since about 10. Added a filter dropdown enxt to the navbar search box, for more refined searching. Yay extra features.
+
+commit 4601f290d420c72221239c53b2be3353d1d888f0
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Tue Oct 29 23:59:44 2013 +1100
+
+    Got account verification via email working, surprisingly easy. yay python modules! Will add lost passwork email tomorrow/today depeneding when i finish htis commit message. Then pagination and small tweaks, then finsihed.
+
+commit bcfe1e5d881bf4a51ef387cbb46e45ed0e0685f3
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Tue Oct 29 21:03:40 2013 +1100
+
+    Worked all day on this on and off, orders working now, and I have a mostly fuctioning account page where yo ucna view your info and update it. Now its onto to sending emails in python.
+
+commit 34a4ea1a78c3cd58de854c4b9d557be78c1a8a57
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Mon Oct 28 17:40:51 2013 +1100
+
+    Cart implmented, orders saving and getting implemented, and dispalying is mostly done, in th works. Currently adapting ym html so a new prettier css file i found works. GOnna work on emails next
+
+commit 51bab83e2ded9e6da8f086c4548deda8e0a51745
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Fri Oct 25 22:45:34 2013 +1100
+
+    Worked on stuff throughout today, added all the tables to the database, currently working on basket items and adding them and such. Users logging in and out currently works, yaya for cookies!
+
+commit 9cdabe2ef95a18ff8170037dd9b82c961620a52c
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Thu Oct 24 01:52:22 2013 +1100
+
+    After loads of debugging i got stuck on one issue, my cookie for user id tracking kept getting set to None, couldnt figure it out until i noticed it might noe be editing the global vaariable. So i added global to it and it worked. thats what I get for just writing so much perl code with all variables assumed global, python doesnt do that..
+
+commit 4f00d2146e890242e985a659fefc0db97c6cfc0e
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Thu Oct 24 00:48:07 2013 +1100
+
+    added mekong.db
+
+commit 213c2db7d36589053a3a7477c631b22089a4a599
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Thu Oct 24 00:47:44 2013 +1100
+
+    Added a whole bunch of code, not very tested yet. Added a database, will add in next commit, about to test functions that write users to the database and also check to see if a user exists whn they try to login, then let them login if they do.
+
+commit 7082a6dbc8a21266638d6eee38d3ace5fb2b9c64
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Tue Oct 22 23:12:44 2013 +1100
+
+    Register form now has a html interface, just need to create the authenticating fucntions and then user storage.
+
+commit ab5950e354ac372328badea6b40c3b88b69e8c47
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Tue Oct 22 00:37:51 2013 +1100
+
+    Search working properly now, also individual book pages.
+
+commit 17d46f1477c5f322a5da95df12e2d99659094976
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Mon Oct 21 15:20:32 2013 +1100
+
+    Messing with book parsing, was tlaking to people seems leik creating a custom book class after reading the json using json seems like a good idea
+
+commit 100e707abf94f3ae1b0fb92c1f3b36a9d9e1263a
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 23:34:05 2013 +1100
+
+    added css file to repo
+
+commit a3b3f929aba49bdb5041160a2ae2015ac17c45ac
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 23:33:06 2013 +1100
+
+    Added a bunch of ui stuff, got a homepage i am happy with, now going to work on writing user setters/getters tomorrow.
+
+commit 43fa92d331ce3d896885dc186cb9b5b9c69a3389
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 15:28:36 2013 +1100
+
+    python2.7
+
+commit 4516ad9f41d9d3ba45294e9bf691be20d109018d
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 15:04:00 2013 +1100
+
+    Impletmented searching of the books, and a semi formatted display of the results
+
+commit 6f32e4c8f3f4d02ba796af02c5ee6af9f38d79ce
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 05:09:03 2013 +1100
+
+    I can now read_books and search through books using search terms, getting the results to be ordered by search term in python was a bit tricky, but i found a way :D now to working on displaying the book info, then i think i will work on proper authentication.
+
+commit ed41f4d6428863c27ce9ef0493f783031b399e6a
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Oct 20 01:49:34 2013 +1100
+
+    Adapted some of the given perl functioanlity into python such as read books, login form and password/login basic auth. Not yet reading from user files
+
+commit 1743531a84f25e9790b56024eebde2ef6da6e083
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Oct 19 20:10:42 2013 +1100
+
+    Created Repo, added the given mokong.cgi as well as a fiel called mekong.pl.cgi which is the perl version if i choose perl, and mekong.py.cgi which is the python version if i decide to do that.
