@@ -20,14 +20,15 @@ config.base_path = re.sub(r'mekong\.py\.cgi$', '', os.environ['SCRIPT_URI'])
 
 if ("HTTP_COOKIE" in os.environ):
 	cookies = os.environ['HTTP_COOKIE']
-	cookies = cookies.split('; ')
+	cookies = cookies.split(';')
 	for cookie in cookies:
 		cookie = cookie.split('=')
-		name = cookie[0]
-		value = cookie[1]
+		name = cookie[0].strip()
+		value = cookie[1].strip()
 		if (name == "user_id"):
-			config.cur_user_id = value
+			config.cur_user_id = int(value)
 			config.cur_user = read_user(config.cur_user_id, None)
+			break
 		else:
 			config.cur_user_id = None
 			config.cur_user = None
@@ -35,7 +36,6 @@ if ("HTTP_COOKIE" in os.environ):
 else:
 	config.cur_user_id = None
 	config.cur_user = None
-
 
 def set_cookie(cookie, user_id):
 	if (cookie == 1):
@@ -165,9 +165,6 @@ def load_page(page, isbn=None, form=None):
 		else:
 			page_header()
 			register_form()
-	elif (page == "user"):
-		page_header()
-		read_user()
 	elif (page == "verification"):
 		validate_code = form.getvalue('code')
 		if (validate_user(validate_code)):
@@ -187,10 +184,14 @@ def load_page(page, isbn=None, form=None):
 		home_page()
 		login_form()
 	elif (page == "cart"):
-		if ('book_add' in form):
-			add_to_cart(form.getvalue('book_add'), form.getvalue('num_books'))
-		page_header()
-		cart_page()
+		if (config.cur_user_id != None):
+			if ('book_add' in form):
+				add_to_cart(form.getvalue('book_add'), form.getvalue('num_books'))
+			page_header()
+			cart_page()
+		else:
+			page_header()
+			login_4_cart()
 	elif (page == "update_cart"):
 		update_cart(form)
 		page_header()
