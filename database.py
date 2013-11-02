@@ -1,6 +1,7 @@
 # database.py contains all the functions used for interfacing with the data base and such.
 import config
 import sqlite3
+import re
 
 def read_user(user_id, username):
     con = sqlite3.connect(config.db_dir)
@@ -27,7 +28,7 @@ def read_user(user_id, username):
         if (found == 0):
             config.last_error = "Sorry that we can't find that username in our banks."
             return None
-            
+
     return row
 
 def check_user_email(email):
@@ -93,7 +94,7 @@ def read_book(isbn):
 
 def read_books_by_author(author):
     con = sqlite3.connect(config.db_dir)
-
+    author = re.sub(r'\'.*', '', author)
     with con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
