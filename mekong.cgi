@@ -14,9 +14,13 @@ from database import *
 from validation import *
 from email1 import *
 
+if (not os.path.exists(config.db_dir)):
+	create_db()
+
+
 # Set global user variables by reading the user's cookies.
 
-config.base_path = re.sub(r'mekong\.py\.cgi$', '', os.environ['SCRIPT_URI'])
+config.base_path = re.sub(r'mekong\.cgi$', '', os.environ['SCRIPT_URI'])
 
 if ("HTTP_COOKIE" in os.environ):
 	cookies = os.environ['HTTP_COOKIE']
@@ -26,6 +30,7 @@ if ("HTTP_COOKIE" in os.environ):
 		name = cookie[0].strip()
 		value = cookie[1].strip()
 		if (name == "user_id"):
+			page_header()
 			config.cur_user_id = int(value)
 			config.cur_user = read_user(config.cur_user_id, None)
 			break
