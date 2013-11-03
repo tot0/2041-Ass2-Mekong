@@ -21,7 +21,7 @@ def verify_email(email, verification_code):
 		This email is to verify you own this email address and aren't some silly internet robot.
 		All you need to do is go to this url:
 			%s
-		and we'll have you verified as soon as one of the trained monekey's on our dev team wakes up.
+		and we'll have you verified as soon as one of the trained cumquats on our dev team wakes up.
 
 		Mekong - The Authors Channel To You.
 		""" % (config.base_path + "mekong.cgi?page=verification&code=" + str(verification_code))
