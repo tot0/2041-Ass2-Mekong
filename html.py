@@ -464,7 +464,7 @@ def book_page(isbn):
 			<div class="row">
 				<div class="col-sm-1 col-md-1 col-lg-2"></div>
 				<div class="col-sm-4 col-md-4 col-lg-3">
-					<img class="img-responsive pull-right" style="border: 3px solid #000; margin-top:22px;" src="%s"/>
+					<center><img class="img-responsive" style="border: 3px solid #000; margin-top:22px;" src="%s"/></center>
 					<br>
 					<table class="table" style="margin-right:100px;">
 						<tr>
@@ -749,10 +749,17 @@ def checkout_page():
 
 def orders_page():
 	orders = database.get_user_orders(config.cur_user_id)
+	print """
+		<div class="container">
+			<div class="jumbotron" style="margin-top:20px; padding-top:10px; padding-bottom:20px;">
+				<h3 style="text-align:center;">You have made %s orders.</h3>
+			</div>
+		</div>
+	""" % (len(orders))
 	for order in orders:
 		total_price = 0	
 		print """
-		</br>
+		<br>
 		<div class="row col-sm-12">
 			<div class="col-lg-2"></div>
 			<div class="col-lg-8">
