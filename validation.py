@@ -162,6 +162,10 @@ def validate_checkout(form):
 	cc_number = form.getvalue('cc_checkout')
 	cc_expire = form.getvalue('cc_expire_checkout')
 
+	if (cc_number == None or cc_expire == None):
+		config.last_error = "Please make sure have filled in all the required fields."
+		return False
+
 	if not legal_cc(cc_number, cc_expire):
 		return False
 

@@ -222,7 +222,7 @@ def register_form():
 					</div>
 					<div class="form-group">
 						<label class="sr-only">Postcode</label>
-						<input id="postcode" class="form-control input-lg" type="number" name="postcode_reg" placeholder="Postcode" required>
+						<input id="postcode" class="form-control input-lg" type="number" min="1" name="postcode_reg" placeholder="Postcode" required>
 					</div>
 					<div class="form-group">
 						<button class="btn btn-primary btn-lg" type="submit">Submit</button>
@@ -675,8 +675,8 @@ def checkout_page():
 						</div>
 					</div>
 					<h3 style="text-align:center;">Payment Details</h3>
-					<input class="form-control" type="text" name="cc_checkout" placeholder="Credit Card Number">
-					<input class="form-control" type="text" name="cc_expire_checkout" placeholder="Card Expiry Date (mm/yy)">
+					<input class="form-control" type="number" min="1" name="cc_checkout" placeholder="Credit Card Number" required>
+					<input class="form-control" type="text" name="cc_expire_checkout" placeholder="Card Expiry Date (mm/yy)" required>
 					<center><button class="btn btn-primary" type="submit" style="margin:10px;">Complete Order</button></center>
 				</form>
 			</div>
@@ -949,7 +949,7 @@ def account_page():
 							<div class="col-sm-6 pull-right">
 							<div class="form-group">
 								<label class="sr-only">Postcode</label>
-								<input id="postcode" class="form-control input-lg pull-right" type="number" name="postcode_reg" placeholder="Postcode" value="%s" required>
+								<input id="postcode" class="form-control input-lg pull-right" type="number" min="1" name="postcode_reg" placeholder="Postcode" value="%s" required>
 							</div>
 						</div>
 					</div>
