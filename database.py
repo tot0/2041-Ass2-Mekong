@@ -10,6 +10,7 @@ def default():
 
 def create_db():
     con = sqlite3.connect(config.db_dir)
+    
     with con:
         cur = con.cursor()
 
@@ -99,6 +100,7 @@ def create_db():
             );
         """
         cur.executescript(other_tables)
+
 
 def read_user(user_id, username):
     con = sqlite3.connect(config.db_dir)

@@ -65,10 +65,10 @@ def legal_address(form):
 	return True
 
 def validate_user(validate_code):
-	if (read_user(validate_code, None) != None):
+	if (database.read_user(validate_code, None) != None):
 		user = ("Yes", validate_code)
 		fields = "verified=?"
-		update_user(fields, user)
+		database.update_user(fields, user)
 		return True
 	else:
 		config.last_error = "This validation code is invalid!"

@@ -30,7 +30,6 @@ if ("HTTP_COOKIE" in os.environ):
 		name = cookie[0].strip()
 		value = cookie[1].strip()
 		if (name == "user_id"):
-			page_header()
 			config.cur_user_id = int(value)
 			config.cur_user = read_user(config.cur_user_id, None)
 			break
@@ -212,7 +211,7 @@ def load_page(page, isbn=None, form=None):
 			orders_page()
 		else:
 			page_header()
-			auth_error(last_error)
+			auth_error(config.last_error)
 			checkout_page()
 	elif (page == "orders"):
 		page_header()

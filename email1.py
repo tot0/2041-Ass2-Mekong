@@ -24,8 +24,8 @@ def verify_email(email, verification_code):
 		and we'll have you verified as soon as one of the trained monekey's on our dev team wakes up.
 
 		Mekong - The Authors Channel To You.
-		"""
-	html = """\
+		""" % (config.base_path + "mekong.cgi?page=verification&code=" + str(verification_code))
+	html = """
 	<html>
 	  <head></head>
 	  <body>
@@ -39,7 +39,7 @@ def verify_email(email, verification_code):
 	    </p>
 	  </body>
 	</html>
-	""" % (config.base_path + "mekong.py.cgi?page=verification&code=" + str(verification_code), config.base_path + "mekong_sm.png")
+	""" % (config.base_path + "mekong.cgi?page=verification&code=" + str(verification_code), config.base_path + "assets/mekong_sm.png")
 
 	# Record the MIME types of both parts - text/plain and text/html.
 	part1 = MIMEText(text, 'plain')
@@ -76,7 +76,7 @@ def recovery_email(email, password):
 
 		Follow this link to login: %s
 		Mekong - The Authors Channel To You.
-		""" % (password, config.base_path + "mekong.py.cgi?page=login")
+		""" % (password, config.base_path + "mekong.cgi?page=login")
 	html = """\
 	<html>
 	  <head></head>
@@ -92,7 +92,7 @@ def recovery_email(email, password):
 	    </p>
 	  </body>
 	</html>
-	""" % (password, config.base_path + "mekong.py.cgi?page=login", config.base_path + "mekong_sm.png")
+	""" % (password, config.base_path + "mekong.cgi?page=login", config.base_path + "mekong_sm.png")
 
 	# Record the MIME types of both parts - text/plain and text/html.
 	part1 = MIMEText(text, 'plain')

@@ -1,3 +1,33 @@
+commit b14e961e8fc87fb9a487d7e61dc7539f65911c4c
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Nov 3 14:05:56 2013 +1100
+
+    Made database creation dynamic, if the file doesnt exist it will be created and the boosk loaded.
+
+commit 1da6eee6da64dc308404c222f07f23bf03019ddb
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Nov 3 12:46:54 2013 +1100
+
+    Removed db form repo
+
+commit 680f8ce1ba53bb9e954259267ed7fe147a181b2c
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sun Nov 3 12:45:44 2013 +1100
+
+    Cant submit, not exactly sure why it just says NOT accepted, bit annoying. I think its to do with file size so im making my db dynamically created when the script run so it means I dont have to submit that 20mb.
+
+commit ce83a6a47515d6a645e563686496a173a1f0b0de
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 18:24:50 2013 +1100
+
+    Removed assets file trying to reduce size.
+
+commit df5866cae24829c21f668c5116452ea11701665c
+Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
+Date:   Sat Nov 2 18:11:34 2013 +1100
+
+    Going to do a submission now, just so one with it working is in there. Might add some more things tomorrow. Extra features include: Pagination, More by this author, search catgories done nicely, UI is very nice, everything sotred in a sqlite3 db so quick loading. And my code is, though not in the ebst way, modulized.
+
 commit 2d1f676a6406648e2fc205086856f234f6d45105
 Author: Lucas Pickup <lpickup@cse.unsw.edu.au>
 Date:   Sat Nov 2 16:40:25 2013 +1100
