@@ -14,14 +14,18 @@ from database import *
 from validation import *
 from email1 import *
 
+# If the mekong database doesn't exist create it.
 if (not os.path.exists(config.db_dir)):
 	create_db()
 
-
-# Set global user variables by reading the user's cookies.
-
+# Global variable of path to script.
 config.base_path = re.sub(r'mekong\.cgi$', '', os.environ['SCRIPT_URI'])
 
+##################################################################
+# Cookie Handling
+##################################################################
+
+# Check for user_id cookie and load the appropriate user.
 if ("HTTP_COOKIE" in os.environ):
 	cookies = os.environ['HTTP_COOKIE']
 	cookies = cookies.split(';')
@@ -32,6 +36,8 @@ if ("HTTP_COOKIE" in os.environ):
 		if (name == "user_id"):
 			config.cur_user_id = int(value)
 			config.cur_user = read_user(config.cur_user_id, None)
+			if (config.cur_user == None):
+				config.cur_user_id = None
 			break
 		else:
 			config.cur_user_id = None
@@ -41,6 +47,7 @@ else:
 	config.cur_user_id = None
 	config.cur_user = None
 
+# This will either set a cookie, or delete a cookie depending on arguments it's passed.
 def set_cookie(cookie, user_id):
 	if (cookie == 1):
 		user_cookie = Cookie.SimpleCookie()
@@ -56,28 +63,21 @@ def set_cookie(cookie, user_id):
 # Misc Functions
 ##################################################################
 
+# This could've been more fancy and would be for real webdev, 
+# but this sort of secruity really wasn't a priority for this assignment.
 def gen_verify_code(user_id):
 	code = user_id
-
 	return code
 
 ##################################################################
 # Search Functions
 ##################################################################
 
-# This took just as long as read_books, but now it's working,
-# and I defintely understand how it works indepth now after 
-# having to heavily modify it.
-def search_books_terms(search_terms, catergory="default_search"):
+# Based of andrewt's search from perl version. Heavily modified though.
+def search_books_terms(search_terms, category="default_search"):
 	books = read_books()
 
 	matches = []
-
-#	unknown_fields = []
-#	for search_term in search_terms:
-#		m = re.match(r'([^:]+):', search_term)
-#		if (m and m.group(1) not in ):
-#			unknown_fields.append(m.group(1))
 
 	for book in books:
 		n_matches = 0
@@ -85,8 +85,8 @@ def search_books_terms(search_terms, catergory="default_search"):
 			next_book = 0
 			match = 0
 			term = search_term
-			field = str(book[catergory])
-			field = re.sub(r'[!().:]', '', field)
+			field = str(book[category])
+			term = re.sub(r'[!()*:$\^?]', '', term)
 			m = re.search(term.lower(), field.lower())
 			if (m):
 				match = 1
@@ -116,15 +116,13 @@ def search_books_terms(search_terms, catergory="default_search"):
 	return matches
 
 
-def search_books(search_string, catergory):
-	search_string = re.sub('\s*$', '', search_string)
-	search_string = re.sub('^\s*', '', search_string)
-	return search_books_terms(search_string.split(), catergory)
+def search_results(search_terms, category, page_num):
+	search_terms = search_terms.strip()
+	matches = search_books_terms(search_terms.split(), category)
 
-def search_results(search_terms, catergory, page_num):
-	matches = search_books(search_terms, catergory)
 	matches_list = [matches[k][0] for k in xrange(len(matches))]
 	
+	# rediculous piece of code to facilitate pagination.
 	if ((len(matches) / 50)%50 == 0 and (len(matches) / 50) > 1):
 		num_pages = int((len(matches) / 50))
 	else:
@@ -142,8 +140,10 @@ def search_results(search_terms, catergory, page_num):
 		stop = int(page_num) * 50
 
 	start_table(str(start + 1) + "-" + str(stop), len(matches))
+
 	for i in xrange(start, stop):
 		display_search_result(matches[i],)
+
 	end_table(pag, num_pages)
 
 
@@ -151,6 +151,8 @@ def search_results(search_terms, catergory, page_num):
 # Control Functions
 ##################################################################
 
+# If I thought about this a bit more it could probably be restructured so page_header() 
+# doesn't have to before everything. But because of the couple of tiems i need to cookies, it is. 
 def load_page(page, isbn=None, form=None):
 
 	if (page == "book"):
@@ -166,6 +168,10 @@ def load_page(page, isbn=None, form=None):
 				page_header()
 				verify_email(form.getvalue('email_reg'), gen_verify_code(read_user(None, form.getvalue('username_reg'))['id']))
 				email_validate_page()
+			else:
+				page_header()
+				auth_error(config.last_error)
+				register_form()
 		else:
 			page_header()
 			register_form()
@@ -224,6 +230,10 @@ def load_page(page, isbn=None, form=None):
 			config.cur_user = read_user(config.cur_user_id, None)
 			page_header()
 			account_page()
+		else:
+			page_header()
+			auth_error(config.last_error)
+			account_page()			
 	elif (page == "recover_pass"):
 		page_header()
 		recover_pass_page()
@@ -235,8 +245,11 @@ def load_page(page, isbn=None, form=None):
 			recover_email_sent()
 		else:
 			page_header()
-			auth_error(config.last_error)
+			auth_error("That email doesn't appear to be in our database!")
 			recover_pass_page()
+	elif (page == "secret"):
+		page_header()
+		secret_page()
 	else:
 		page_header()
 		four_oh_four()

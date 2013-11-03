@@ -5,6 +5,7 @@ import re, os
 
 
 def navbar(): 
+	# make sure search terms are retained.
 	m = re.match(r'^filter=[^&]*&search_terms=([^&]+)', os.environ['QUERY_STRING'])
 	if m:
 		search_terms = re.sub(r'%3A', ':', re.sub(r'[+]', ' ', m.group(1)))
@@ -46,7 +47,6 @@ def navbar():
 							<button class="btn btn-default" type="submit" style="height:35px; top:-5px;"><span class="glyphicon glyphicon-search" style="top:-2px;"></span></button>
 						</span>
 					</div>
-
 				</form>
 	""" % (search_terms)
 	if (config.cur_user_id != None):
@@ -114,7 +114,7 @@ def home_page():
 		<div id="top" class="header">
 			<div class="vert-text">
 				<h1 class="logo" style="text-shadow: 3px 3px 2px rgba(150, 150, 150, 1);">Mekong</h1>
-				<h3 class="logo" style="text-shadow: 3px 3px 2px rgba(150, 150, 150, 1);">The <em>Authors</em> Channel To <em>You</em></h3>
+				<h3 class="logo" style="text-shadow: 3px 3px 2px rgba(150, 150, 150, 1);">The <em>Authors</em> Channel To <em>Yo<a href="?page=secret" style="color:white;">u</a></em></h3>
 				<form class="">
 					<style>
 						.input-group-lg-home {
@@ -195,7 +195,7 @@ def register_form():
 					</div>
 					<div class="form-group">
 						<label class="sr-only">Email</label>
-						<input id="email" class="form-control input-lg" type="text" name="email_reg" placeholder="Email" required>
+						<input id="email" class="form-control input-lg" type="email" name="email_reg" placeholder="Email" required>
 					</div>
 					<hr style="border-top:1px solid #5a5a5a;">
 					<h3>Address Details</h3>
@@ -209,7 +209,7 @@ def register_form():
 					</div>
 					<div class="form-group">
 						<label class="sr-only">State</label>
-						<select id="state" class=" name="state_reg" required>
+						<select id="state" name="state_reg" value="NSW" required>
 							<option>NSW</option>
 							<option>QLD</option>
 							<option>VIC</option>
@@ -222,7 +222,7 @@ def register_form():
 					</div>
 					<div class="form-group">
 						<label class="sr-only">Postcode</label>
-						<input id="postcode" class="form-control input-lg" type="text" name="postcode_reg" placeholder="Postcode" required>
+						<input id="postcode" class="form-control input-lg" type="number" name="postcode_reg" placeholder="Postcode" required>
 					</div>
 					<div class="form-group">
 						<button class="btn btn-primary btn-lg" type="submit">Submit</button>
@@ -528,7 +528,7 @@ def book_page(isbn):
 							<input type="hidden" name="page" value="cart">
 							<input type="hidden" name="book_add" value="%s">
 							<div class="input-group">
-      							<input class="form-control pull-right" type="number" name="num_books" value="1" style="max-width:70px;">
+      							<input class="form-control pull-right" type="number" name="num_books" max="1000000000000" min="1" value="1" style="max-width:70px;">
       							<span class="input-group-btn">
         							<button class="btn btn-primary" type="submit" style="height:42px;">Add to Cart</button>
   								</span>
@@ -610,7 +610,7 @@ def cart_page():
 							<strong>%s</strong>
 						</td>
 						<td>
-							<input class="input-sm" type="number" name="num_books_%s" min="1" value="%s" style="max-width:100px;"></br>
+							<input class="input-sm" type="number" name="num_books_%s" min="1" max="1000000000000" value="%s" style="max-width:100px;"></br>
 							<label>
 								<input type="checkbox" name="remove_%s" value="remove">
 								Remove
@@ -910,7 +910,7 @@ def account_page():
 					</div>
 					<div class="form-group">
 						<label class="sr-only">Email</label>
-						<input id="email" class="form-control input-lg" type="text" name="email_reg" placeholder="Email" value="%s" required>
+						<input id="email" class="form-control input-lg" type="email" name="email_reg" placeholder="Email" value="%s" required>
 					</div>
 					<hr style="border-top:1px solid #5a5a5a;">
 					<h3>Address Details</h3>
@@ -926,7 +926,7 @@ def account_page():
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label class="sr-only">State</label>
-								<select id="state" class="" name="state_reg" style="width" required>
+								<select id="state" name="state_reg" style="width" required>
 									<option value="0">NSW</option>
 									<option value="1">QLD</option>
 									<option value="2">VIC</option>
@@ -942,7 +942,7 @@ def account_page():
 							<div class="col-sm-6 pull-right">
 							<div class="form-group">
 								<label class="sr-only">Postcode</label>
-								<input id="postcode" class="form-control input-lg pull-right" type="text" name="postcode_reg" placeholder="Postcode" value="%s" required>
+								<input id="postcode" class="form-control input-lg pull-right" type="number" name="postcode_reg" placeholder="Postcode" value="%s" required>
 							</div>
 						</div>
 					</div>
@@ -979,6 +979,19 @@ def four_oh_four():
 				</div>
 			</div>
 	"""
+
+def secret_page():
+	print """
+			<div id="top" class="header" style="background: url(assets/mekong_secret.jpg) no-repeat center center fixed;">
+				<div class="vert-text" style="color: black; vertical-align:text-top; padding:100px 0px 0px 0px;">
+					<h1 class="" style="text-shadow: 1px 1px 0px rgba(255, 255, 255, 1);">Oops!</h1>
+					<h3 class="" style="text-shadow: 2px 2px 3px rgba(255, 255, 255, 1);">Well this is a bit <strong>Awkward</strong></br> no ones supposed to see this...</h3>
+
+					<a class="btn btn-primary" href="?">Drift Home</a>
+				</div>
+			</div>
+	"""
+
 
 def page_trailer():
 	print """

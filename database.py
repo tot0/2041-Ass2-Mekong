@@ -143,13 +143,6 @@ def check_user_email(email):
 
     return user
 
-def reset_user_pass(user_id):
-    password = "password"
-
-    update_user(("password_hash=?"),(password, user_id))
-
-    return password
-
 def write_user(user):
     con = sqlite3.connect(config.db_dir)
 
@@ -165,6 +158,13 @@ def update_user(fields, user):
         cur = con.cursor()
 
         cur.execute("update users set " + fields + " where id=?", user)
+
+def reset_user_pass(user_id):
+    password = "password"
+
+    update_user(("password_hash=?"),(password, user_id))
+
+    return password
 
 def read_books():
 
@@ -239,6 +239,8 @@ def add_to_cart(isbn, num):
         item = cur.fetchone()
         if (item is not None):
             num += item[2]
+            if (num > 1000000000000):
+                num = 1000000000000
             cur.execute('update basket_items set num=? where user_id=? and isbn=?', (num, config.cur_user_id, isbn))
         else:
             cur.execute('insert into basket_items values (?,?,?)', cart_item)
@@ -266,6 +268,8 @@ def update_cart(form):
         for row in rows:
             isbn = row[1]
             if (row[2] != int(cur_num_values[isbn])):
+                if (int(cur_num_values[isbn]) > 1000000000000):
+                    cur_num_values[isbn] = 1000000000000
                 cur.execute("update basket_items set num=? where isbn=? and user_id=?", (cur_num_values[isbn], isbn, config.cur_user_id))
 
 def clear_user_cart(user_id):

@@ -79,20 +79,26 @@ def register_validate(form):
 	if (auth_username(form.getvalue('username_reg'))):
 		username = form.getvalue('username_reg')
 	else:
-		html.page_header()
-		html.auth_error(config.last_error)
-		html.register_form()
 		return False
 
 	if (auth_password(form.getvalue('password_reg'), form.getvalue('password_con_reg'))):
 		password = form.getvalue('password_reg')
 	else:
-		html.page_header()
-		html.auth_error(config.last_error)
-		html.register_form()
 		return False
 
 	if (form.getvalue('page') == "updated_details"):
+		user = database.read_user(None, form.getvalue('username_reg'))
+		if (user != None):
+			if (user['id'] != config.cur_user_id):
+				config.last_error = "Sorry an existing user of Mekong already has that username."
+				return False
+
+		user = database.check_user_email(form.getvalue('email_reg'))
+		if (user != None):
+			if (user['id'] != config.cur_user_id):
+				config.last_error = "Sorry an existing user of Mekong already has that email."
+				return False
+					
 		user = (form.getvalue('username_reg'), 
 			form.getvalue('first_name_reg'), 
 			form.getvalue('last_name_reg'), 
@@ -105,7 +111,20 @@ def register_validate(form):
 			config.cur_user_id)
 		fields = "username=?,first_name=?,last_name=?,email=?,password_hash=?,street=?,city=?,state=?,postcode=?"
 		database.update_user(fields, user)
+
 	else:
+		user = database.read_user(None, form.getvalue('username_reg'))
+		if (user != None):
+			if (user['id'] != config.cur_user_id):
+				config.last_error = "Sorry an existing user of Mekong already has that username."
+				return False
+
+		user = database.check_user_email(form.getvalue('email_reg'))
+		if (user != None):
+			if (user['id'] != config.cur_user_id):
+				config.last_error = "Sorry an existing user of Mekong already has that email."
+				return False
+
 		user = (form.getvalue('username_reg'), 
 			form.getvalue('first_name_reg'), 
 			form.getvalue('last_name_reg'), 
@@ -126,9 +145,15 @@ def legal_cc(number, expiry):
 		config.last_error = "Sorry Credit Card numbers must be 16 digits."
 		return False
 
-	m = re.match(r'^\d\d\/\d\d$', expiry)
+	m = re.match(r'^(\d\d)\/(\d\d)$', expiry)
 	if not m:
 		config.last_error = "Sorry Credit Card expiry dates must be in the form mm/yy. e.g. '06/17'"
+		return False
+	if (int(m.group(1)) > 12 or int(m.group(1)) == 0):
+		config.last_error = "Sorry months are number from 1 (January) to 12 (December)."
+		return False
+	if (int(m.group(2)) < 13):
+		config.last_error = "Sorry we don't accept expired credit cards."
 		return False
 
 	return True
